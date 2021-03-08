@@ -2,7 +2,6 @@ package brotli
 
 import (
 	"bytes"
-	"github.com/billcoding/calls"
 	c "github.com/billcoding/flygo/context"
 	"github.com/billcoding/flygo/middleware"
 	"github.com/billcoding/flygo/mime"
@@ -75,18 +74,18 @@ func (b *brotli) Handler() func(c *c.Context) {
 				if strings.Index(ct, ";") != -1 {
 					ct = strings.TrimSpace(strings.Split(ct, ";")[0])
 				}
-				calls.Empty(ct, func() {
+				if ct == "" {
 					ct = mime.BINARY
-				})
+				}
 				ctx.Header().Set("Vary", "Content-Encoding")
 				ctx.Header().Set("Content-Encoding", "br")
 				var buffers bytes.Buffer
 				var bw = NewWriter(&buffers, WriterOptions{Quality: b.quality, LGWin: b.lgWin})
 				defer bw.Close()
 				_, werr := bw.Write(odata)
-				calls.NNil(werr, func() {
+				if werr != nil {
 					b.logger.Println(werr)
-				})
+				}
 				bw.Flush()
 				ctx.Write(buffers.Bytes())
 			}
